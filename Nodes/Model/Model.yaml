@@ -1,0 +1,14 @@
+Name: Model
+Type: ModelCategoryFolder
+Children:
+- Name: BrokerIpAddress
+  Type: BaseDataVariableType
+  DataType: String
+  Value: "192.168.0.1"
+- Name: Variable1
+  Type: BaseDataVariableType
+  DataType: Int32
+- Name: Message
+  Type: BaseDataVariableType
+  DataType: String
+  Value: "0"
