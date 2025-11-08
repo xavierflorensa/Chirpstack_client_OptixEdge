@@ -7,11 +7,14 @@ using OpcUa = UAManagedCore.OpcUa;
 using FTOptix.NetLogic;
 using FTOptix.UI;
 using FTOptix.OPCUAServer;
+using System.Globalization;
 #endregion
 using uPLibrary.Networking.M2Mqtt;
 using uPLibrary.Networking.M2Mqtt.Messages;
 using FTOptix.RAEtherNetIP;
 using FTOptix.CommunicationDriver;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 public class SubscriberLogic : BaseNetLogic
 {
@@ -30,6 +33,7 @@ public class SubscriberLogic : BaseNetLogic
             //new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE }); // QoS level
             new byte[] { MqttMsgBase.QOS_LEVEL_AT_MOST_ONCE }); // QoS level
         messageVariable = Project.Current.GetVariable("Model/Message");
+        payloadExample = Project.Current.GetVariable("Model/Payloadexample");
     }
 
     public override void Stop()
@@ -40,11 +44,127 @@ public class SubscriberLogic : BaseNetLogic
 
     private void SubscribeClientMqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
     {
-        //messageVariable.Value = "Message received: " + System.Text.Encoding.UTF8.GetString(e.Message);
-        messageVariable.Value = "Message received: " + System.Text.Encoding.Default.GetString(e.Message); 
-       
+        try
+        {
+            // Get raw JSON and ensure it's clean
+            var rawJson = System.Text.Encoding.Default.GetString(e.Message).Trim();
+            
+            // Store raw JSON in messageVariable
+            messageVariable.Value = rawJson;
+
+            // Parse using JsonDocument for more control
+            using (JsonDocument document = JsonDocument.Parse(rawJson))
+            {
+                var root = document.RootElement;
+                
+                if (root.TryGetProperty("object", out JsonElement objectElement) &&
+                    objectElement.TryGetProperty("Distance", out JsonElement distanceElement))
+                {
+                    string distanceValue = distanceElement.GetString();
+                    payloadExample.Value = $"Distance: {distanceValue}";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            payloadExample.Value = $"Error parsing JSON: {ex.Message}";
+            Log.Info($"Error parsing JSON: {ex.Message}");
+            // Log the raw JSON for debugging
+            Log.Info($"Raw JSON: {messageVariable.Value}");
+        }
     }
+    
+    public class ChirpstackUplink
+{
+    [JsonPropertyName("deduplicationId")]
+    public string DeduplicationId { get; set; }
+
+    [JsonPropertyName("time")]
+    public string Time { get; set; }
+
+    [JsonPropertyName("deviceInfo")]
+    public DeviceInfo DeviceInfo { get; set; }
+
+    [JsonPropertyName("object")]
+    public SensorData Object { get; set; }
+}
+
+public class DeviceInfo
+{
+    [JsonPropertyName("deviceName")]
+    public string DeviceName { get; set; }
+
+    [JsonPropertyName("devEui")]
+    public string DevEui { get; set; }
+}
+
+public class SensorData
+{
+    [JsonPropertyName("Bat")]
+    public string Bat { get; set; }
+
+    [JsonPropertyName("Distance")]
+    public string Distance { get; set; }
+
+    [JsonPropertyName("TempC_DS18B20")]
+    public string TempC_DS18B20 { get; set; }
+
+    // Accept either number or quoted number; converter handles both
+    [JsonPropertyName("Sensor_flag")]
+    public string Sensor_flag { get; set; }
+
+    [JsonPropertyName("Node_type")]
+    public string Node_type { get; set; }
+
+    // Accept either number or quoted number; converter handles both
+    [JsonPropertyName("Interrupt_flag")]
+    public string Interrupt_flag { get; set; }
+}
+
+// Converter that reads numbers/booleans/null as strings as well as normal strings
+public class FlexibleStringConverter : System.Text.Json.Serialization.JsonConverter<string>
+{
+    public override string Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        switch (reader.TokenType)
+        {
+            case JsonTokenType.String:
+                return reader.GetString();
+            case JsonTokenType.Number:
+                // prefer integer representation when possible
+                if (reader.TryGetInt64(out long l))
+                    return l.ToString(CultureInfo.InvariantCulture);
+                // fallback to double for non-integer numbers
+                return reader.GetDouble().ToString(CultureInfo.InvariantCulture);
+            case JsonTokenType.True:
+            case JsonTokenType.False:
+                return reader.GetBoolean().ToString();
+            case JsonTokenType.Null:
+                return null;
+            default:
+                // best-effort fallback
+                try
+                {
+                    return reader.GetString();
+                }
+                catch
+                {
+                    return null;
+                }
+        }
+    }
+
+    public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
+    {
+        if (value == null)
+            writer.WriteNullValue();
+        else
+            writer.WriteStringValue(value);
+    }
+}
 
     private MqttClient subscribeClient;
     private IUAVariable messageVariable;
+
+    private IUAVariable payloadExample;
 }
