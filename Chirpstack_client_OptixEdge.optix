@@ -49,15 +49,23 @@ Project:
    Uri: 'urn:FTOptix:NetLogic'
    Module: FTOptix.NetLogic
    Version: 4.0
+  13:
+   Uri: 'urn:FTOptix:WebUI'
+   Module: FTOptix.WebUI
+   Version: 1.2
+  14:
+   Uri: 'urn:FTOptix:WebUI:Net'
+   Module: FTOptix.WebUI.Net
+   Version: 1.2
  Statistics:
-  TotalNodeCount: 159
-  Objects: 73
+  TotalNodeCount: 183
+  Objects: 77
   ObjectTypes: 1
-  Variables: 84
+  Variables: 104
   VariableTypes: 0
   DataTypes: 0
   Methods: 1
-  References: 0
+  References: 5
   ReferenceTypes: 0
   Files: 18
  Nodes:

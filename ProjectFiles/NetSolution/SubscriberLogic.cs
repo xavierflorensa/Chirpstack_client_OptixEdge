@@ -15,6 +15,7 @@ using FTOptix.RAEtherNetIP;
 using FTOptix.CommunicationDriver;
 using System.Text.Json.Serialization;
 using System.Text.Json;
+using FTOptix.WebUI;
 
 public class SubscriberLogic : BaseNetLogic
 {
