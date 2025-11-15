@@ -35,7 +35,9 @@ public class SubscriberLogic : BaseNetLogic
             new byte[] { MqttMsgBase.QOS_LEVEL_AT_MOST_ONCE }); // QoS level
         messageVariable = Project.Current.GetVariable("Model/Message");
         distanceStr = Project.Current.GetVariable("Model/Distance_str");
-        batteryStr = Project.Current.GetVariable("Model/Battery_str");  
+        distanceInt = Project.Current.GetVariable("Model/Distance_int");
+        batteryStr = Project.Current.GetVariable("Model/Battery_str"); 
+       
     }
 
     public override void Stop()
@@ -65,6 +67,13 @@ public class SubscriberLogic : BaseNetLogic
                 {
                     string distanceValue = distanceElement.GetString();
                     distanceStr.Value = $"{distanceValue}";
+                    
+                    // Extract only the numeric part from "683 mm"
+                    string numericPart = System.Text.RegularExpressions.Regex.Match(distanceValue, @"\d+").Value;
+                    if (int.TryParse(numericPart, out int distanceIntValue))
+                    {
+                        distanceInt.Value = distanceIntValue;
+                    }
 
                 }
                 if (root.TryGetProperty("object", out JsonElement objectElementBat) &&
@@ -178,4 +187,6 @@ public class FlexibleStringConverter : System.Text.Json.Serialization.JsonConver
     private IUAVariable messageVariable;
     private IUAVariable distanceStr;
     private IUAVariable batteryStr;
+    private IUAVariable distanceInt;
+
 }

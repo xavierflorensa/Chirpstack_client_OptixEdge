@@ -20,3 +20,6 @@ Children:
   Type: BaseDataVariableType
   DataType: String
   Value: "0"
+- Name: Distance_int
+  Type: BaseDataVariableType
+  DataType: Int32
