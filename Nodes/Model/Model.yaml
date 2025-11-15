@@ -12,7 +12,7 @@ Children:
   Type: BaseDataVariableType
   DataType: String
   Value: "0"
-- Name: Payloadexample
+- Name: Distance_str
   Type: BaseDataVariableType
   DataType: String
   Value: "0"

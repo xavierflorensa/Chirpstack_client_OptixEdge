@@ -34,7 +34,7 @@ public class SubscriberLogic : BaseNetLogic
             //new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE }); // QoS level
             new byte[] { MqttMsgBase.QOS_LEVEL_AT_MOST_ONCE }); // QoS level
         messageVariable = Project.Current.GetVariable("Model/Message");
-        payloadExample = Project.Current.GetVariable("Model/Payloadexample");
+        distanceStr = Project.Current.GetVariable("Model/Distance_str");
     }
 
     public override void Stop()
@@ -62,13 +62,14 @@ public class SubscriberLogic : BaseNetLogic
                     objectElement.TryGetProperty("Distance", out JsonElement distanceElement))
                 {
                     string distanceValue = distanceElement.GetString();
-                    payloadExample.Value = $"Distance: {distanceValue}";
+                    //payloadExample.Value = $"Distance: {distanceValue}";
+                    distanceStr.Value = $"Distance: {distanceValue}";
                 }
             }
         }
         catch (Exception ex)
         {
-            payloadExample.Value = $"Error parsing JSON: {ex.Message}";
+            distanceStr.Value = $"Error parsing JSON: {ex.Message}";
             Log.Info($"Error parsing JSON: {ex.Message}");
             // Log the raw JSON for debugging
             Log.Info($"Raw JSON: {messageVariable.Value}");
@@ -166,6 +167,5 @@ public class FlexibleStringConverter : System.Text.Json.Serialization.JsonConver
 
     private MqttClient subscribeClient;
     private IUAVariable messageVariable;
-
-    private IUAVariable payloadExample;
+    private IUAVariable distanceStr;
 }

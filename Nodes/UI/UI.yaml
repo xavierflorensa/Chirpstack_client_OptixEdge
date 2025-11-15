@@ -482,7 +482,7 @@ Children:
       - Name: DynamicLink
         Type: DynamicLink
         DataType: NodePath
-        Value: "/Objects/Chirpstack_client_OptixEdge/Model/Payloadexample"
+        Value: "/Objects/Chirpstack_client_OptixEdge/Model/Distance_str"
         Children:
         - Name: Mode
           Type: BaseVariableType
