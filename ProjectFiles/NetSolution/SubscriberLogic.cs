@@ -63,7 +63,8 @@ public class SubscriberLogic : BaseNetLogic
                 {
                     string distanceValue = distanceElement.GetString();
                     //payloadExample.Value = $"Distance: {distanceValue}";
-                    distanceStr.Value = $"Distance: {distanceValue}";
+                    //distanceStr.Value = $"Distance: {distanceValue}";
+                    distanceStr.Value = $"{distanceValue}";
                 }
             }
         }
