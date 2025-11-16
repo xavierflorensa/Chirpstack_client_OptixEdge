@@ -40,6 +40,7 @@ public class SubscriberLogic : BaseNetLogic
         batteryStr = Project.Current.GetVariable("Model/Battery_str"); 
         frameCount = Project.Current.GetVariable("Model/FrameCount"); 
         rssi = Project.Current.GetVariable("Model/Rssi");
+        timestamp = Project.Current.GetVariable("Model/Timestamp");
     }
 
     public override void Stop()
@@ -62,6 +63,13 @@ public class SubscriberLogic : BaseNetLogic
             using (JsonDocument document = JsonDocument.Parse(rawJson))
             {
                 var root = document.RootElement;
+                
+                // Parse time
+                if (root.TryGetProperty("time", out JsonElement timeElement))
+                {
+                    string timeValue = timeElement.GetString();
+                    timestamp.Value = timeValue;
+                }
                 
                 // Parse fCnt
                 if (root.TryGetProperty("fCnt", out JsonElement fCntElement))
@@ -225,5 +233,6 @@ public class FlexibleStringConverter : System.Text.Json.Serialization.JsonConver
     private IUAVariable distanceInt;
     private IUAVariable frameCount;
     private IUAVariable rssi;
+    private IUAVariable timestamp;
 
 }
