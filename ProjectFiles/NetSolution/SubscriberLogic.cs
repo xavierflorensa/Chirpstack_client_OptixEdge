@@ -16,6 +16,7 @@ using FTOptix.CommunicationDriver;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using FTOptix.WebUI;
+using System.Security.Cryptography;
 
 public class SubscriberLogic : BaseNetLogic
 {
@@ -37,7 +38,8 @@ public class SubscriberLogic : BaseNetLogic
         distanceStr = Project.Current.GetVariable("Model/Distance_str");
         distanceInt = Project.Current.GetVariable("Model/Distance_int");
         batteryStr = Project.Current.GetVariable("Model/Battery_str"); 
-       
+        frameCount = Project.Current.GetVariable("Model/FrameCount"); 
+        rssi = Project.Current.GetVariable("Model/Rssi");
     }
 
     public override void Stop()
@@ -61,6 +63,29 @@ public class SubscriberLogic : BaseNetLogic
             {
                 var root = document.RootElement;
                 
+                // Parse fCnt
+                if (root.TryGetProperty("fCnt", out JsonElement fCntElement))
+                {
+                    if (int.TryParse(fCntElement.ToString(), out int fCntValue))
+                    {
+                        frameCount.Value = fCntValue;
+                    }
+                }
+                
+                // Parse RSSI from rxInfo array
+                if (root.TryGetProperty("rxInfo", out JsonElement rxInfoElement) && 
+                    rxInfoElement.ValueKind == JsonValueKind.Array && 
+                    rxInfoElement.GetArrayLength() > 0)
+                {
+                    var firstRxInfo = rxInfoElement[0];
+                    if (firstRxInfo.TryGetProperty("rssi", out JsonElement rssiElement))
+                    {
+                        if (int.TryParse(rssiElement.ToString(), out int rssiValue))
+                        {
+                            rssi.Value = rssiValue;
+                        }
+                    }
+                }
                 
                 if (root.TryGetProperty("object", out JsonElement objectElement) &&
                     objectElement.TryGetProperty("Distance", out JsonElement distanceElement))
@@ -74,14 +99,12 @@ public class SubscriberLogic : BaseNetLogic
                     {
                         distanceInt.Value = distanceIntValue;
                     }
-
                 }
                 if (root.TryGetProperty("object", out JsonElement objectElementBat) &&
                     objectElementBat.TryGetProperty("Bat", out JsonElement batElement))
                 {
                     string batValue = batElement.GetString();
                     batteryStr.Value = $"{batValue}";
-
                 }
             }
         }
@@ -89,7 +112,6 @@ public class SubscriberLogic : BaseNetLogic
         {
             distanceStr.Value = $"Error parsing JSON: {ex.Message}";
             Log.Info($"Error parsing JSON: {ex.Message}");
-            // Log the raw JSON for debugging
             Log.Info($"Raw JSON: {messageVariable.Value}");
         }
     }
@@ -105,8 +127,14 @@ public class SubscriberLogic : BaseNetLogic
     [JsonPropertyName("deviceInfo")]
     public DeviceInfo DeviceInfo { get; set; }
 
+    [JsonPropertyName("fCnt")]
+    public int FCnt { get; set; }
+
     [JsonPropertyName("object")]
     public SensorData Object { get; set; }
+
+    [JsonPropertyName("rxInfo")]
+    public RxInfo[] RxInfo { get; set; }
 }
 
 public class DeviceInfo
@@ -116,6 +144,15 @@ public class DeviceInfo
 
     [JsonPropertyName("devEui")]
     public string DevEui { get; set; }
+}
+
+public class RxInfo
+{
+    [JsonPropertyName("rssi")]
+    public int Rssi { get; set; }
+
+    [JsonPropertyName("snr")]
+    public double Snr { get; set; }
 }
 
 public class SensorData
@@ -129,14 +166,12 @@ public class SensorData
     [JsonPropertyName("TempC_DS18B20")]
     public string TempC_DS18B20 { get; set; }
 
-    // Accept either number or quoted number; converter handles both
     [JsonPropertyName("Sensor_flag")]
     public string Sensor_flag { get; set; }
 
     [JsonPropertyName("Node_type")]
     public string Node_type { get; set; }
 
-    // Accept either number or quoted number; converter handles both
     [JsonPropertyName("Interrupt_flag")]
     public string Interrupt_flag { get; set; }
 }
@@ -188,5 +223,7 @@ public class FlexibleStringConverter : System.Text.Json.Serialization.JsonConver
     private IUAVariable distanceStr;
     private IUAVariable batteryStr;
     private IUAVariable distanceInt;
+    private IUAVariable frameCount;
+    private IUAVariable rssi;
 
 }

@@ -23,3 +23,9 @@ Children:
 - Name: Distance_int
   Type: BaseDataVariableType
   DataType: Int32
+- Name: FrameCount
+  Type: BaseDataVariableType
+  DataType: Int32
+- Name: Rssi
+  Type: BaseDataVariableType
+  DataType: Int32
